@@ -284,7 +284,13 @@ See `test/README.md` for detailed testing documentation.
 
 ## License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see [LICENSE](../LICENSE) file for details.
+
+### Third Party Acknowledgments
+
+This library is based on protocol specifications from the [Sofie ATEM Connection](https://github.com/Sofie-Automation/sofie-atem-connection) library (MIT License). See [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md) for complete attribution and license details.
 
 ## Acknowledgments
 

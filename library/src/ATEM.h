@@ -1,10 +1,16 @@
 /*
  * ATEM.h
- * Header file for ATEM communication protocol for ESP32
- * Based on Sofie ATEM Connection library
+ * ESP32 Arduino Library for Blackmagic Design ATEM Video Switchers
  * 
- * This file contains the ATEM class definition and protocol structures
- * for communicating with Blackmagic Design ATEM switchers
+ * Copyright (c) 2025 Mirza Ceyzar <mirza.ceyzar@gmail.com>
+ * Licensed under the Apache License 2.0
+ * 
+ * Based on protocol specifications from the Sofie ATEM Connection library:
+ * https://github.com/Sofie-Automation/sofie-atem-connection
+ * Copyright (c) 2023 Norsk rikskringkasting AS (MIT License)
+ * 
+ * This is an independent C++/Arduino implementation for ESP32 platforms.
+ * See THIRD_PARTY_LICENSES.md for complete attribution details.
  */
 
 #ifndef ATEM_H
