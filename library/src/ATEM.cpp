@@ -1136,39 +1136,311 @@ void ATEM::autoTransition() {
 // 🔄 ADVANCED SWITCHING
 
 /**
- * @brief Fade to black or fade from black
- * TODO: Send FtbS command
+ * @brief Fade to black or fade from black ✅ IMPLEMENTED!
+ * 
+ * Sends FtbA command to toggle fade to black state for specified Mix Effect
+ * Based on Sofie ATEM Connection library FadeToBlackAutoCommand
  */
 void ATEM::fadeToBlack(uint8_t me) {
-  logPrintf(ATEM_LOG_INFO, "fadeToBlack(me=%d) - TODO: implement FtbS command", me);
-  debugPrint("fadeToBlack() - not implemented yet");
+  if (_connection_state != ATEM_CONNECTED) {
+    logPrintf(ATEM_LOG_WARN, "Cannot perform fade to black: ATEM not connected");
+    return;
+  }
+  
+  // ATEM FtbA (Fade to Black Auto) command structure:
+  // Header: 12 bytes
+  // Command: 4 bytes length + 4 bytes "FtbA" + 4 bytes data = 12 bytes
+  // Total: 24 bytes (12 header + 12 command section)
+  
+  const int command_length = 24;
+  
+  uint8_t packet[command_length] = {0};
+  
+  // Build packet header (same pattern as DCut/DAut)
+  uint16_t opcode = (FLAG_ACK_REQUEST << 11);  // AckRequest flag
+  uint16_t length = command_length;
+  
+  // Opcode and length in first 2 bytes (big-endian)
+  packet[0] = (opcode | length) >> 8;
+  packet[1] = (opcode | length) & 0xFF;
+  
+  // Session ID in bytes 2-3 (big-endian)
+  packet[2] = (_session_id >> 8) & 0xFF;
+  packet[3] = _session_id & 0xFF;
+  
+  // Local packet ID in bytes 10-11 (big-endian)
+  packet[10] = (_local_packet_id >> 8) & 0xFF;
+  packet[11] = _local_packet_id & 0xFF;
+  
+  // Command data starts at byte 12
+  // Command length (12 bytes total for command)
+  packet[12] = 0x00;
+  packet[13] = 0x0C;  // 12 bytes total for command
+  packet[14] = 0x00;
+  packet[15] = 0x00;
+  
+  // Command name "FtbA" (Fade to Black Auto)
+  packet[16] = 'F';
+  packet[17] = 't';
+  packet[18] = 'b';
+  packet[19] = 'A';
+  
+  // ME index (Mix Effect index) - 4 bytes, big-endian
+  // Based on Sofie: buffer.writeUInt8(this.mixEffect, 0); (first byte is ME index)
+  packet[20] = me;
+  packet[21] = 0x00;
+  packet[22] = 0x00;
+  packet[23] = 0x00;
+  
+  // Store packet for potential retransmission
+  storePacketForRetransmission(_local_packet_id, packet, command_length);
+  
+  // Send the packet
+  _udp.beginPacket(_switcher_ip, ATEM_PORT);
+  _udp.write(packet, command_length);
+  bool success = _udp.endPacket();
+  
+  // Log the command
+  printSofieFormat("SEND", packet, command_length);
+  
+  if (success) {
+    logPrintf(ATEM_LOG_INFO, "Sent FtbA command: fade to black toggle for ME %d", me);
+    _local_packet_id++;
+  } else {
+    logPrintf(ATEM_LOG_ERROR, "Failed to send FtbA command");
+  }
 }
 
 /**
- * @brief Set fade to black rate
- * TODO: Send FtbP command  
+ * @brief Set fade to black rate ✅ IMPLEMENTED!
+ * 
+ * Sends FtbC command to set fade to black rate for specified Mix Effect
+ * Based on Sofie ATEM Connection library FadeToBlackRateCommand
  */
 void ATEM::setFadeToBlackRate(uint16_t rate, uint8_t me) {
-  logPrintf(ATEM_LOG_INFO, "setFadeToBlackRate(rate=%d, me=%d) - TODO: implement FtbP command", rate, me);
-  debugPrint("setFadeToBlackRate() - not implemented yet");
+  if (_connection_state != ATEM_CONNECTED) {
+    logPrintf(ATEM_LOG_WARN, "Cannot set fade to black rate: ATEM not connected");
+    return;
+  }
+  
+  // ATEM FtbC (Fade to Black Rate Change) command structure:
+  // Header: 12 bytes
+  // Command: 4 bytes length + 4 bytes "FtbC" + 4 bytes data = 12 bytes
+  // Total: 24 bytes (12 header + 12 command section)
+  
+  const int command_length = 24;
+  
+  uint8_t packet[command_length] = {0};
+  
+  // Build packet header (same pattern as other commands)
+  uint16_t opcode = (FLAG_ACK_REQUEST << 11);  // AckRequest flag
+  uint16_t length = command_length;
+  
+  // Opcode and length in first 2 bytes (big-endian)
+  packet[0] = (opcode | length) >> 8;
+  packet[1] = (opcode | length) & 0xFF;
+  
+  // Session ID in bytes 2-3 (big-endian)
+  packet[2] = (_session_id >> 8) & 0xFF;
+  packet[3] = _session_id & 0xFF;
+  
+  // Local packet ID in bytes 10-11 (big-endian)
+  packet[10] = (_local_packet_id >> 8) & 0xFF;
+  packet[11] = _local_packet_id & 0xFF;
+  
+  // Command data starts at byte 12
+  // Command length (12 bytes total for command)
+  packet[12] = 0x00;
+  packet[13] = 0x0C;  // 12 bytes total for command
+  packet[14] = 0x00;
+  packet[15] = 0x00;
+  
+  // Command name "FtbC" (Fade to Black Rate Change)
+  packet[16] = 'F';
+  packet[17] = 't';
+  packet[18] = 'b';
+  packet[19] = 'C';
+  
+  // Command data (4 bytes) - Based on Sofie:
+  // buffer.writeUInt8(1, 0);                    // Mask field
+  // buffer.writeUInt8(this.mixEffect, 1);       // ME index
+  // buffer.writeUInt8(this.properties.rate, 2); // Rate value
+  packet[20] = 0x01;  // Mask: 1 = rate field is being set
+  packet[21] = me;    // ME index
+  packet[22] = rate & 0xFF;  // Rate (in frames) - lower 8 bits
+  packet[23] = 0x00;  // Reserved/padding
+  
+  // Store packet for potential retransmission
+  storePacketForRetransmission(_local_packet_id, packet, command_length);
+  
+  // Send the packet
+  _udp.beginPacket(_switcher_ip, ATEM_PORT);
+  _udp.write(packet, command_length);
+  bool success = _udp.endPacket();
+  
+  // Log the command
+  printSofieFormat("SEND", packet, command_length);
+  
+  if (success) {
+    logPrintf(ATEM_LOG_INFO, "Sent FtbC command: set fade to black rate to %d frames for ME %d", rate, me);
+    _local_packet_id++;
+  } else {
+    logPrintf(ATEM_LOG_ERROR, "Failed to send FtbC command");
+  }
 }
 
 /**
- * @brief Set transition position manually
- * TODO: Send CTPs command
+ * @brief Set transition position manually ✅ IMPLEMENTED!
+ * 
+ * Sends CTPs command to set transition position for specified Mix Effect
+ * Based on Sofie ATEM Connection library TransitionPositionCommand
  */
 void ATEM::setTransitionPosition(uint16_t position, uint8_t me) {
-  logPrintf(ATEM_LOG_INFO, "setTransitionPosition(pos=%d, me=%d) - TODO: implement CTPs command", position, me);
-  debugPrint("setTransitionPosition() - not implemented yet");
+  if (_connection_state != ATEM_CONNECTED) {
+    logPrintf(ATEM_LOG_WARN, "Cannot set transition position: ATEM not connected");
+    return;
+  }
+  
+  // ATEM CTPs (Change Transition Position) command structure:
+  // Header: 12 bytes
+  // Command: 4 bytes length + 4 bytes "CTPs" + 4 bytes data = 12 bytes
+  // Total: 24 bytes (12 header + 12 command section)
+  
+  const int command_length = 24;
+  
+  uint8_t packet[command_length] = {0};
+  
+  // Build packet header (same pattern as other commands)
+  uint16_t opcode = (FLAG_ACK_REQUEST << 11);  // AckRequest flag
+  uint16_t length = command_length;
+  
+  // Opcode and length in first 2 bytes (big-endian)
+  packet[0] = (opcode | length) >> 8;
+  packet[1] = (opcode | length) & 0xFF;
+  
+  // Session ID in bytes 2-3 (big-endian)
+  packet[2] = (_session_id >> 8) & 0xFF;
+  packet[3] = _session_id & 0xFF;
+  
+  // Local packet ID in bytes 10-11 (big-endian)
+  packet[10] = (_local_packet_id >> 8) & 0xFF;
+  packet[11] = _local_packet_id & 0xFF;
+  
+  // Command data starts at byte 12
+  // Command length (12 bytes total for command)
+  packet[12] = 0x00;
+  packet[13] = 0x0C;  // 12 bytes total for command
+  packet[14] = 0x00;
+  packet[15] = 0x00;
+  
+  // Command name "CTPs" (Change Transition Position)
+  packet[16] = 'C';
+  packet[17] = 'T';
+  packet[18] = 'P';
+  packet[19] = 's';
+  
+  // Command data (4 bytes) - Based on Sofie:
+  // buffer.writeUInt8(this.mixEffect, 0);                // ME index
+  // buffer.writeUInt16BE(this.properties.handlePosition, 2); // Position (big-endian)
+  packet[20] = me;                        // ME index
+  packet[21] = 0x00;                      // Reserved
+  packet[22] = (position >> 8) & 0xFF;    // Position high byte
+  packet[23] = position & 0xFF;           // Position low byte
+  
+  // Store packet for potential retransmission
+  storePacketForRetransmission(_local_packet_id, packet, command_length);
+  
+  // Send the packet
+  _udp.beginPacket(_switcher_ip, ATEM_PORT);
+  _udp.write(packet, command_length);
+  bool success = _udp.endPacket();
+  
+  // Log the command
+  printSofieFormat("SEND", packet, command_length);
+  
+  if (success) {
+    logPrintf(ATEM_LOG_INFO, "Sent CTPs command: set transition position to %d for ME %d", position, me);
+    _local_packet_id++;
+  } else {
+    logPrintf(ATEM_LOG_ERROR, "Failed to send CTPs command");
+  }
 }
 
 /**
- * @brief Enable/disable transition preview
- * TODO: Send CTPr command
+ * @brief Enable/disable transition preview ✅ IMPLEMENTED!
+ * 
+ * Sends CTPr command to enable/disable transition preview for specified Mix Effect
+ * Based on Sofie ATEM Connection library PreviewTransitionCommand
  */
 void ATEM::previewTransition(bool on, uint8_t me) {
-  logPrintf(ATEM_LOG_INFO, "previewTransition(on=%s, me=%d) - TODO: implement CTPr command", on ? "true" : "false", me);
-  debugPrint("previewTransition() - not implemented yet");
+  if (_connection_state != ATEM_CONNECTED) {
+    logPrintf(ATEM_LOG_WARN, "Cannot set transition preview: ATEM not connected");
+    return;
+  }
+  
+  // ATEM CTPr (Change Transition Preview) command structure:
+  // Header: 12 bytes
+  // Command: 4 bytes length + 4 bytes "CTPr" + 4 bytes data = 12 bytes
+  // Total: 24 bytes (12 header + 12 command section)
+  
+  const int command_length = 24;
+  
+  uint8_t packet[command_length] = {0};
+  
+  // Build packet header (same pattern as other commands)
+  uint16_t opcode = (FLAG_ACK_REQUEST << 11);  // AckRequest flag
+  uint16_t length = command_length;
+  
+  // Opcode and length in first 2 bytes (big-endian)
+  packet[0] = (opcode | length) >> 8;
+  packet[1] = (opcode | length) & 0xFF;
+  
+  // Session ID in bytes 2-3 (big-endian)
+  packet[2] = (_session_id >> 8) & 0xFF;
+  packet[3] = _session_id & 0xFF;
+  
+  // Local packet ID in bytes 10-11 (big-endian)
+  packet[10] = (_local_packet_id >> 8) & 0xFF;
+  packet[11] = _local_packet_id & 0xFF;
+  
+  // Command data starts at byte 12
+  // Command length (12 bytes total for command)
+  packet[12] = 0x00;
+  packet[13] = 0x0C;  // 12 bytes total for command
+  packet[14] = 0x00;
+  packet[15] = 0x00;
+  
+  // Command name "CTPr" (Change Transition Preview)
+  packet[16] = 'C';
+  packet[17] = 'T';
+  packet[18] = 'P';
+  packet[19] = 'r';
+  
+  // Command data (4 bytes) - Based on Sofie:
+  // buffer.writeUInt8(this.mixEffect, 0);                        // ME index
+  // buffer.writeUInt8(this.properties.preview ? 1 : 0, 1);      // Preview on/off
+  packet[20] = me;              // ME index
+  packet[21] = on ? 1 : 0;      // Preview enable (1) or disable (0)
+  packet[22] = 0x00;            // Reserved
+  packet[23] = 0x00;            // Reserved
+  
+  // Store packet for potential retransmission
+  storePacketForRetransmission(_local_packet_id, packet, command_length);
+  
+  // Send the packet
+  _udp.beginPacket(_switcher_ip, ATEM_PORT);
+  _udp.write(packet, command_length);
+  bool success = _udp.endPacket();
+  
+  // Log the command
+  printSofieFormat("SEND", packet, command_length);
+  
+  if (success) {
+    logPrintf(ATEM_LOG_INFO, "Sent CTPr command: %s transition preview for ME %d", on ? "enabled" : "disabled", me);
+    _local_packet_id++;
+  } else {
+    logPrintf(ATEM_LOG_ERROR, "Failed to send CTPr command");
+  }
 }
 
 // 🔄 AUX & DOWNSTREAM KEYS

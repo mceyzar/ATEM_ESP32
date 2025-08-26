@@ -8,6 +8,7 @@
  * - Comprehensive serial command interface for manual control
  * - Preview/Program input switching with validation
  * - CUT and AUTO transition controls
+ * - Phase 1 Advanced Switching: Fade to Black, Transition Position, Preview Transition
  * - Detailed status reporting and error handling
  * - Professional debug output and connection management
  * 
@@ -30,6 +31,10 @@
  *    - program bars (set program to Color Bars)
  *    - cut (immediate transition)
  *    - auto (fade/wipe transition)
+ *    - ftb (fade to black toggle)
+ *    - ftb-rate 25 (set fade rate)
+ *    - transition 5000 (set transition position)
+ *    - preview-trans on (enable transition preview)
  *    - status (show current state)
  */
 
@@ -108,6 +113,19 @@ void processUARTCommands() {
     else if (command.equalsIgnoreCase("auto")) {
       handleAutoCommand();
     }
+    // 🔄 ADVANCED SWITCHING COMMANDS (Phase 1)
+    else if (command.equalsIgnoreCase("ftb") || command.equalsIgnoreCase("fadetoBlack")) {
+      handleFadeToBlackCommand();
+    }
+    else if (command.startsWith("ftb-rate ") || command.startsWith("faderate ")) {
+      handleFadeToBlackRateCommand(command);
+    }
+    else if (command.startsWith("transition ") || command.startsWith("trans ")) {
+      handleTransitionPositionCommand(command);
+    }
+    else if (command.startsWith("preview-trans ") || command.startsWith("pvw-trans ")) {
+      handlePreviewTransitionCommand(command);
+    }
     else if (command.equalsIgnoreCase("status")) {
       printCurrentStatus();
     }
@@ -124,12 +142,20 @@ void printHelp() {
   Serial.println("Available commands:");
   Serial.println("  help          - Show this help");
   Serial.println("  status        - Show current ATEM status");
+  Serial.println("");
+  Serial.println("🎬 BASIC SWITCHING:");
   Serial.println("  preview <N>   - Set preview input");
   Serial.println("  pvw <N>       - Alias for preview");
   Serial.println("  program <N>   - Set program input");
   Serial.println("  pgm <N>       - Alias for program");
   Serial.println("  cut           - Perform CUT transition (immediate)");
   Serial.println("  auto          - Perform AUTO transition (fade/wipe)");
+  Serial.println("");
+  Serial.println("🔄 ADVANCED SWITCHING (Phase 1):");
+  Serial.println("  ftb           - Fade to black toggle");
+  Serial.println("  ftb-rate <N>  - Set fade to black rate (frames)");
+  Serial.println("  transition <N> - Set transition position (0-10000)");
+  Serial.println("  preview-trans <on|off> - Enable/disable transition preview");
   Serial.println("========================================");
   Serial.println("Input options:");
   Serial.println("  1-4           - Camera inputs (CAM1-CAM4)");
@@ -141,10 +167,12 @@ void printHelp() {
   Serial.println("Examples:");
   Serial.println("  preview 2     - Set preview to CAM2");
   Serial.println("  program bars  - Set program to Color Bars");
-  Serial.println("  pgm col1      - Set program to Color Generator 1");
-  Serial.println("  pvw black     - Set preview to Black");
   Serial.println("  cut           - Immediate switch from preview to program");
   Serial.println("  auto          - Fade/wipe transition from preview to program");
+  Serial.println("  ftb           - Toggle fade to black");
+  Serial.println("  ftb-rate 25   - Set fade rate to 25 frames");
+  Serial.println("  transition 5000 - Set transition to 50% position");
+  Serial.println("  preview-trans on - Enable transition preview");
   Serial.println("  status        - Show program/preview status");
   Serial.println("========================================");
 }
@@ -283,6 +311,117 @@ void handleAutoCommand() {
   Serial.println("[CMD] Transition effect in progress...");
 }
 
+// 🔄 ADVANCED SWITCHING COMMAND HANDLERS (Phase 1)
+
+void handleFadeToBlackCommand() {
+  Serial.println("[CMD] Performing Fade to Black toggle...");
+  
+  if (!myAtem.isConnected()) {
+    Serial.println("[CMD] ❌ Error: ATEM not connected");
+    return;
+  }
+  
+  myAtem.fadeToBlack(); // Default ME 0
+  Serial.println("[CMD] ✓ Fade to Black command sent");
+  Serial.println("[CMD] ATEM will toggle fade to black state");
+}
+
+void handleFadeToBlackRateCommand(String command) {
+  int spaceIndex = command.indexOf(' ');
+  if (spaceIndex == -1) {
+    Serial.println("[CMD] Error: Missing rate. Usage: ftb-rate <frames>");
+    return;
+  }
+  
+  String rateStr = command.substring(spaceIndex + 1);
+  rateStr.trim();
+  
+  int rate = rateStr.toInt();
+  if (rate <= 0 || rate > 250) {
+    Serial.println("[CMD] Error: Invalid rate. Use 1-250 frames");
+    return;
+  }
+  
+  if (!myAtem.isConnected()) {
+    Serial.println("[CMD] ❌ Error: ATEM not connected");
+    return;
+  }
+  
+  Serial.print("[CMD] Setting fade to black rate to ");
+  Serial.print(rate);
+  Serial.println(" frames...");
+  
+  myAtem.setFadeToBlackRate(rate); // Default ME 0
+  Serial.println("[CMD] ✓ Fade to black rate command sent");
+}
+
+void handleTransitionPositionCommand(String command) {
+  int spaceIndex = command.indexOf(' ');
+  if (spaceIndex == -1) {
+    Serial.println("[CMD] Error: Missing position. Usage: transition <0-10000>");
+    return;
+  }
+  
+  String posStr = command.substring(spaceIndex + 1);
+  posStr.trim();
+  
+  int position = posStr.toInt();
+  if (position < 0 || position > 10000) {
+    Serial.println("[CMD] Error: Invalid position. Use 0-10000 (0=preview, 10000=program)");
+    return;
+  }
+  
+  if (!myAtem.isConnected()) {
+    Serial.println("[CMD] ❌ Error: ATEM not connected");
+    return;
+  }
+  
+  Serial.print("[CMD] Setting transition position to ");
+  Serial.print(position);
+  Serial.print("/10000 (");
+  Serial.print((float)position / 100.0);
+  Serial.println("%)...");
+  
+  myAtem.setTransitionPosition(position); // Default ME 0
+  Serial.println("[CMD] ✓ Transition position command sent");
+}
+
+void handlePreviewTransitionCommand(String command) {
+  int spaceIndex = command.indexOf(' ');
+  if (spaceIndex == -1) {
+    Serial.println("[CMD] Error: Missing state. Usage: preview-trans <on|off>");
+    return;
+  }
+  
+  String stateStr = command.substring(spaceIndex + 1);
+  stateStr.trim();
+  stateStr.toLowerCase();
+  
+  bool enable;
+  if (stateStr == "on" || stateStr == "1" || stateStr == "true") {
+    enable = true;
+  } else if (stateStr == "off" || stateStr == "0" || stateStr == "false") {
+    enable = false;
+  } else {
+    Serial.println("[CMD] Error: Invalid state. Use: on, off, 1, 0, true, false");
+    return;
+  }
+  
+  if (!myAtem.isConnected()) {
+    Serial.println("[CMD] ❌ Error: ATEM not connected");
+    return;
+  }
+  
+  Serial.print("[CMD] ");
+  Serial.print(enable ? "Enabling" : "Disabling");
+  Serial.println(" transition preview...");
+  
+  myAtem.previewTransition(enable); // Default ME 0
+  Serial.print("[CMD] ✓ Transition preview ");
+  Serial.print(enable ? "enabled" : "disabled");
+  Serial.println(" command sent");
+}
+
 void printCurrentStatus() {
   Serial.println("========================================");
   Serial.println("Current ATEM Status");
@@ -389,7 +528,8 @@ void setup() {
   atemIP.fromString(ATEM_IP);
   
   // Initialize ATEM connection
-  myAtem.enableDebug(false);  // Disable debug for cleaner output
+  myAtem.enableDebug(true);  // Enable debug for packet analysis
+  myAtem.setLogLevel(ATEM_LOG_DEBUG); // Enable debug level logging
   
   if (myAtem.begin(atemIP)) {
     Serial.println("ATEM initialization successful!");

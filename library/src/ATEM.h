@@ -22,7 +22,7 @@
 #include "ATEM_Inputs.h"
 
 // Version Information
-#define ATEM_ESP32_VERSION "v2.0.0"
+#define ATEM_ESP32_VERSION "v2.1.0"
 #define ATEM_ESP32_BUILD_DATE __DATE__ " " __TIME__
 
 // ATEM Protocol Constants (based on Sofie ATEM Connection library)
@@ -219,33 +219,33 @@ public:
   
   // 🔄 ADVANCED SWITCHING
   /**
-   * @brief Fade to black or fade from black
+   * @brief Fade to black or fade from black ✅ IMPLEMENTED!
    * @param me Mix effect index (default 0)
-   * TODO: Send FtbS command
+   * Sends FtbA command to toggle fade to black state
    */
   void fadeToBlack(uint8_t me = 0);
   
   /**
-   * @brief Set fade to black rate
+   * @brief Set fade to black rate ✅ IMPLEMENTED!
    * @param rate Rate in frames
    * @param me Mix effect index (default 0)
-   * TODO: Send FtbP command  
+   * Sends FtbC command to set fade to black transition rate
    */
   void setFadeToBlackRate(uint16_t rate, uint8_t me = 0);
   
   /**
-   * @brief Set transition position manually
+   * @brief Set transition position manually ✅ IMPLEMENTED!
    * @param position Position 0-10000 (0=preview, 10000=program)
    * @param me Mix effect index (default 0)
-   * TODO: Send CTPs command
+   * Sends CTPs command to set transition position
    */
   void setTransitionPosition(uint16_t position, uint8_t me = 0);
   
   /**
-   * @brief Enable/disable transition preview
+   * @brief Enable/disable transition preview ✅ IMPLEMENTED!
    * @param on Enable preview transition
    * @param me Mix effect index (default 0)
-   * TODO: Send CTPr command
+   * Sends CTPr command to enable/disable transition preview
    */
   void previewTransition(bool on, uint8_t me = 0);
   

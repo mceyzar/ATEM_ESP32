@@ -105,15 +105,75 @@ class LibraryTestSuite {
     async runRegressionTests() {
         console.log('\n🔄 Running Regression Tests (Full Protocol Validation)...');
         
-        const regressionPath = path.join(__dirname, '..', 'extras', 'test', 'regression_test.js');
+        // First run Phase 1 packet validation
+        console.log('\n📦 Running Phase 1 Packet Validation...');
+        const phase1TestPath = path.join(__dirname, 'test_phase1_packets.js');
         
-        if (!fs.existsSync(regressionPath)) {
-            this.results.regression.status = 'skipped';
-            this.results.regression.details = 'Regression test file not found';
-            console.log('⚠️  Regression tests not available');
-            return true;
+        let phase1Success = false;
+        if (fs.existsSync(phase1TestPath)) {
+            phase1Success = await this.runPacketValidation(phase1TestPath);
+        } else {
+            console.log('⚠️  Phase 1 packet validation test not found');
         }
+        
+        // Then run traditional regression tests if available
+        const regressionPath = path.join(__dirname, '..', 'extras', 'test', 'regression_test.js');
+        let regressionSuccess = true;
+        
+        if (fs.existsSync(regressionPath)) {
+            console.log('\n🔄 Running Traditional Regression Tests...');
+            regressionSuccess = await this.runTraditionalRegression(regressionPath);
+        } else {
+            console.log('⚠️  Traditional regression tests not available');
+        }
+        
+        // Combine results
+        const overallSuccess = phase1Success && regressionSuccess;
+        
+        if (overallSuccess) {
+            this.results.regression.status = 'passed';
+            this.results.regression.details = phase1Success ? 
+                'Phase 1 packet validation passed' : 'Traditional regression passed';
+        } else {
+            this.results.regression.status = 'failed';
+            this.results.regression.details = 'Regression test failures detected';
+        }
+        
+        return overallSuccess;
+    }
 
+    async runPacketValidation(testPath) {
+        return new Promise((resolve) => {
+            const proc = spawn('node', [testPath], {
+                stdio: 'pipe',
+                env: { ...process.env, AUTOMATED: 'true' }
+            });
+
+            let output = '';
+            proc.stdout.on('data', (data) => {
+                const text = data.toString();
+                output += text;
+                process.stdout.write(text);
+            });
+
+            proc.stderr.on('data', (data) => {
+                const text = data.toString();
+                output += text;
+                process.stderr.write(text);
+            });
+
+            proc.on('close', (code) => {
+                resolve(code === 0);
+            });
+
+            proc.on('error', (err) => {
+                console.error('Packet validation error:', err.message);
+                resolve(false);
+            });
+        });
+    }
+
+    async runTraditionalRegression(regressionPath) {
         return new Promise((resolve) => {
             const proc = spawn('node', [regressionPath], {
                 stdio: 'pipe',
@@ -134,19 +194,11 @@ class LibraryTestSuite {
             });
 
             proc.on('close', (code) => {
-                if (code === 0) {
-                    this.results.regression.status = 'passed';
-                    this.results.regression.details = 'Full regression suite passed';
-                } else {
-                    this.results.regression.status = 'failed';
-                    this.results.regression.details = 'Regression test failures detected';
-                }
                 resolve(code === 0);
             });
 
             proc.on('error', (err) => {
-                this.results.regression.status = 'error';
-                this.results.regression.details = `Error: ${err.message}`;
+                console.error('Traditional regression error:', err.message);
                 resolve(false);
             });
         });

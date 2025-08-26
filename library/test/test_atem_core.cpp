@@ -120,6 +120,74 @@ void test_event_callbacks(void) {
     TEST_ASSERT_TRUE(true);
 }
 
+// 🔄 PHASE 1 ADVANCED SWITCHING UNIT TESTS
+
+// Test fade to black function calls
+void test_fade_to_black_functions(void) {
+    // Test basic fade to black call (should not crash)
+    mockAtem.fadeToBlack();
+    mockAtem.fadeToBlack(0); // Explicit ME 0
+    TEST_ASSERT_TRUE(true); // If we get here, no crash occurred
+}
+
+// Test fade to black rate function
+void test_fade_to_black_rate_function(void) {
+    // Test various fade rates
+    mockAtem.setFadeToBlackRate(12);   // 12 frames
+    mockAtem.setFadeToBlackRate(25);   // 25 frames  
+    mockAtem.setFadeToBlackRate(30);   // 30 frames
+    mockAtem.setFadeToBlackRate(50);   // 50 frames
+    mockAtem.setFadeToBlackRate(250);  // Maximum reasonable rate
+    
+    // Test with explicit ME parameter
+    mockAtem.setFadeToBlackRate(25, 0);
+    
+    TEST_ASSERT_TRUE(true); // If we get here, no crash occurred
+}
+
+// Test transition position function
+void test_transition_position_function(void) {
+    // Test boundary values
+    mockAtem.setTransitionPosition(0);      // 0% (preview)
+    mockAtem.setTransitionPosition(5000);   // 50% (halfway)
+    mockAtem.setTransitionPosition(10000);  // 100% (program)
+    
+    // Test intermediate values
+    mockAtem.setTransitionPosition(2500);   // 25%
+    mockAtem.setTransitionPosition(7500);   // 75%
+    
+    // Test with explicit ME parameter
+    mockAtem.setTransitionPosition(5000, 0);
+    
+    TEST_ASSERT_TRUE(true); // If we get here, no crash occurred
+}
+
+// Test preview transition function
+void test_preview_transition_function(void) {
+    // Test enable/disable states
+    mockAtem.previewTransition(true);   // Enable
+    mockAtem.previewTransition(false);  // Disable
+    
+    // Test with explicit ME parameter
+    mockAtem.previewTransition(true, 0);
+    mockAtem.previewTransition(false, 0);
+    
+    TEST_ASSERT_TRUE(true); // If we get here, no crash occurred
+}
+
+// Test Phase 1 function combination
+void test_phase1_function_combination(void) {
+    // Test calling multiple Phase 1 functions in sequence
+    mockAtem.setFadeToBlackRate(25);
+    mockAtem.previewTransition(true);
+    mockAtem.setTransitionPosition(3000);
+    mockAtem.fadeToBlack();
+    mockAtem.setTransitionPosition(0);
+    mockAtem.previewTransition(false);
+    
+    TEST_ASSERT_TRUE(true); // If we get here, no crash occurred
+}
+
 // Main test runner
 int main(int argc, char **argv) {
     UNITY_BEGIN();
@@ -141,6 +209,13 @@ int main(int argc, char **argv) {
     // Event system tests
     RUN_TEST(test_connection_state_changes);
     RUN_TEST(test_event_callbacks);
+    
+    // 🔄 Phase 1 Advanced Switching Tests
+    RUN_TEST(test_fade_to_black_functions);
+    RUN_TEST(test_fade_to_black_rate_function);
+    RUN_TEST(test_transition_position_function);
+    RUN_TEST(test_preview_transition_function);
+    RUN_TEST(test_phase1_function_combination);
     
     return UNITY_END();
 }

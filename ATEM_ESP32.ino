@@ -11,14 +11,14 @@
 //   BasicATEMControl         - Simple ATEM control example
 //   AutomatedSwitching       - Timer-based automated switching demo
 //
-// 🔧 Development workflow:
+// � Development workflow:
 //   1. Make changes in library/src/, library/examples/, or library/test/
 //   2. Run ./build_upload_monitor.sh to test changes
 //   3. The build system automatically installs latest library code
 //   4. This file gets replaced with the selected example
 //   5. Full regression testing (35 tests) validates the build
 //
-// 💡 Examples:
+// �💡 Examples:
 //   ./build_upload_monitor.sh                           # Build ComprehensiveController
 //   ./build_upload_monitor.sh BasicATEMControl          # Build BasicATEMControl  
 //   ./build_upload_monitor.sh --help                    # Show all options
