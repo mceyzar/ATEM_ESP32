@@ -35,6 +35,10 @@ regression_test.js
 node_modules/
 package*.json
 
+# Private Planning Documents (not for public consumption)
+PROJECT_ROADMAP.md
+REPOSITORY_CLEANUP_SUMMARY.md
+
 # Configuration Files with Sensitive Data
 config.h
 
