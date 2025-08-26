@@ -1,0 +1,57 @@
+# Arduino/ESP32 build artifacts
+*.bin
+*.elf
+*.map
+*.hex
+
+# IDE files - keep minimal .vscode for library development
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
+# Development support files (moved to devSupport/)
+devSupport/
+
+# Local configuration
+config.h
+
+# PlatformIO build artifacts
+.pio/
+.pioenvs/
+outputlog
+JSoutputlog
+network_test_output
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# Development and Testing Files
+PROJECT_PLAN.md
+TROUBLESHOOTING.md
+XIAO_ESP32C6_UPLOAD_GUIDE.md
+regression_test.js
+node_modules/
+package*.json
+
+# Configuration Files with Sensitive Data
+config.h
+
+# Temporary and Output Files
+*.tmp
+*.log
+*.out
+build/
+dist/
+
+# Development documentation (keep only essential docs)
+atem_protocol_analysis.md
+DEBUG_README.md
+LOGGING_IMPLEMENTATION_SUMMARY.md
+Event_Demo_*.txt
+Event_Demo_Config.txt
+
+# Build scripts (development only)
+build_upload_monitor.sh
+regression_test.js

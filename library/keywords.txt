@@ -1,0 +1,59 @@
+#######################################
+# Syntax Coloring Map For ATEM ESP32
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ATEM	KEYWORD1
+ATEMState	KEYWORD1
+ATEMConnectionState	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+loop	KEYWORD2
+getConnectionState	KEYWORD2
+getState	KEYWORD2
+changePreviewInput	KEYWORD2
+changeProgramInput	KEYWORD2
+cut	KEYWORD2
+autoTransition	KEYWORD2
+onConnectionStateChanged	KEYWORD2
+onProgramInputChanged	KEYWORD2
+onPreviewInputChanged	KEYWORD2
+onStateChanged	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+ATEM_DISCONNECTED	LITERAL1
+ATEM_CONNECTING	LITERAL1
+ATEM_CONNECTED	LITERAL1
+ATEM_ERROR	LITERAL1
+
+ATEM_INPUT_BLACK	LITERAL1
+ATEM_INPUT_CAM1	LITERAL1
+ATEM_INPUT_CAM2	LITERAL1
+ATEM_INPUT_CAM3	LITERAL1
+ATEM_INPUT_CAM4	LITERAL1
+ATEM_INPUT_CAM5	LITERAL1
+ATEM_INPUT_CAM6	LITERAL1
+ATEM_INPUT_CAM7	LITERAL1
+ATEM_INPUT_CAM8	LITERAL1
+ATEM_INPUT_BARS	LITERAL1
+ATEM_INPUT_COLOR1	LITERAL1
+ATEM_INPUT_COLOR2	LITERAL1
+ATEM_INPUT_MP1	LITERAL1
+ATEM_INPUT_MP2	LITERAL1
+
+ATEM_LOG_NONE	LITERAL1
+ATEM_LOG_ERROR	LITERAL1
+ATEM_LOG_WARN	LITERAL1
+ATEM_LOG_INFO	LITERAL1
+ATEM_LOG_DEBUG	LITERAL1
+ATEM_LOG_VERBOSE	LITERAL1
